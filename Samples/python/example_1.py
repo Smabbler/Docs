@@ -11,63 +11,77 @@ import pandas as pd
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split
 
 
-def analyse_smbb(text, alg_version, configuration, timeout=10):
+def analyse_smbb(text, alg_version, api_instance, n_retries=5):
     ''' send query to API, wait for the result, retrieve the result '''
-    
-    with smabbler.api.client.ApiClient(configuration) as api_client:
-        # Create an instance of the API class
-        api_instance = smabbler.api.client.DefaultApi(api_client)
 
-        # init analysis
-        initialize_operation_request_model = smabbler.api.client.InitializeOperationRequestModel()
-        initialize_operation_request_model.algorithm_version = alg_version
-        initialize_operation_request_model.text = text
+    # init analysis
+    initialize_operation_request_model = smabbler.api.client.InitializeOperationRequestModel()
+    initialize_operation_request_model.algorithm_version = alg_version
+    initialize_operation_request_model.text = text
 
+    for n in range(n_retries+1):
         try:
             api_response_init = api_instance.analyze_initialize_post(
                 initialize_operation_request_model)
+
         except Exception as e:
             print("Exception when calling DefaultApi->analyze_initialize_post: %s\n" % e)
-            return
-
-        # check if results available and get them or timeout
-        api_instance = smabbler.api.client.DefaultApi(api_client)
-        operation_status_model = smabbler.api.client.OperationStatusModel()
-        operation_status_model.operation_id = api_response_init.operation_id
-
-        n_tries = timeout // 2
-        for n in range(n_tries):
-            # check if results are available
-            try:
-                api_response = api_instance.analyze_status_post(operation_status_model)
-            except Exception as e:
-                print("Exception when calling DefaultApi->analyze_status_post: %s\n" % e)
-                time.sleep(2)
-                continue
-
-            
-            if api_response.status == 'processed':
-                # get the results
-                try:
-                    api_response = api_instance.analyze_result_post(operation_status_model)
-                    return api_response
-                    
-                except Exception as e:
-                    print("Exception when calling DefaultApi->analyze_result_post: %s\n" % e)
-                    return
-                    
             time.sleep(2)
+            continue
         
-        print('Timeout')
-        return
+        else:
+            break
+
+    # check if results available and get them or timeout
+    operation_status_model = smabbler.api.client.OperationStatusModel()
+    operation_status_model.operation_id = api_response_init.operation_id
+
+    for n in range(n_retries+1):
+        # check if results are available
+        try:
+            api_response = api_instance.analyze_status_post(operation_status_model)
+        except Exception as e:
+            print("Exception when calling DefaultApi->analyze_status_post: %s\n" % e) 
+            time.sleep(2)
+            continue
+
+        
+        if api_response.status == 'processed':
+            # get the results
+            try:
+                api_response = api_instance.analyze_result_post(operation_status_model)
+                return api_response
+                
+            except Exception as e:
+                print("Exception when calling DefaultApi->analyze_result_post: %s\n" % e)
+                return
+                
+        time.sleep(2)
+    
+    print('Timeout')
+    return
+
 
 def extract_results(res):
-   return [i.result for i in res.result.items]
+    ''' extracts annotations from smabbler output '''
+    return [i.result for i in res.result.items]
 
 
 def reshape_to_features(df, col_res, col_id, col_label):
+    ''' reshapes the results dataframe (df) to the format usable with
+        sklearn, treating smabbler annotations as features (columns)
+
+        df - pandas DataFrame containing smabbler annotation, IDs and labels
+        col_res - column name containing smabbler annotations
+        col_id - column name containing IDs
+        col_label - column name containing labels (y)
+
+        returns:
+        pandas DataFrame
+    '''
     to_df = []
     
     for idx, gdf in df.groupby(by=col_id):
@@ -85,66 +99,61 @@ def reshape_to_features(df, col_res, col_id, col_label):
     return df_r
 
 
-def main(offline=False):
-    df_tr = pd.read_csv('train.csv', index_col='ID')
-    df_tt = pd.read_csv('test.csv', index_col='ID')
-    
-    df_tr = df_tr[df_tr['LabelID'].isin(['ASC99', 'ASC165'])].copy()
-    df_tt = df_tt[df_tt['LabelID'].isin(['ASC99', 'ASC165'])].copy()
-    
-    
+
+def main():
+    # load input data
+    df_data = pd.read_csv('data_red.csv', index_col='ID')
+   
+    df_data = df_data.sample(frac=1)
+
+    # configuration: endpoint and authorization key
     configuration = smabbler.api.client.Configuration(
-        host="<<SMABBLER API URL>>"
+        host="https://beta.api.smabbler.com"
     )
     
-    # Configure API key authorization: api_key
-    configuration.api_key['api_key'] = '<<YOUR API KEY HERE>>'
+    configuration.api_key['api_key'] = '<<YOUR_API_KEY_HERE>>'
     
-    # we are using algorithm for extraction of symptoms and diseases
+    # in this example we are using algorithm that extracts symptoms and diseases
+    # other off the shelf algorithms can be found by calling:
+    # api_instance.algorithm_versions_get()
+    # custom algorithms can be created here:
+    # https://www.smabbler.com/alpha 
     algo = 'medicalconditionsanddiseases'
     
-    # process input text
-    if not offline:
-        df_tr['res_raw'] = df_tr['Text'].map(
-            lambda text: analyse_smbb(text, algo, configuration, timeout=10))
-        df_tr = df_tr.dropna(subset='res_raw')
-        df_tr['res'] = df_tr['res_raw'].map(extract_results)
+    # create api instance and get annotations for the input text
+    with smabbler.api.client.ApiClient(configuration) as api_client: 
+        api_instance = smabbler.api.client.DefaultApi(api_client)
+
+        df_data['res_raw'] = df_data['Text'].map(
+            lambda text: analyse_smbb(text, algo, api_instance, n_retries=5))
+
+    # extract results
+    df_data['res'] = df_data['res_raw'].map(extract_results)
     
-        df_tt['res_raw'] = df_tt['Text'].map(
-            lambda text: analyse_smbb(text, algo, configuration, timeout=10))
-        df_tt = df_tt.dropna(subset='res_raw')
-        df_tt['res'] = df_tt['res_raw'].map(extract_results)
-
-    else:
-        df_tt = pd.read_csv('test_ready.csv', index_col='ID')
-        df_tr = pd.read_csv('train_ready.csv', index_col='ID')
-
-    # prepare results for usage in sklearn
+    # prepare results for usage in sklearn and split into train and test
     col_res, col_id, col_label = 'res', 'ID', 'LabelID'
     
-    df_tr_ = reshape_to_features(df_tr, col_res, col_id, col_label)
-    df_tt_ = reshape_to_features(df_tt, col_res, col_id, col_label)
-    
-    df_tmp = pd.concat([df_tr_, df_tt_]).fillna(0.0).sort_index(axis=1)
-    
-    df_train = df_tmp.iloc[:df_tr_.shape[0]]
-    df_test = df_tmp.iloc[df_tr_.shape[0]:]
+    df_tmp = reshape_to_features(df_data, col_res, col_id, col_label)
     
     cols_X = list(set(df_tmp.columns) - set([col_label]))
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        df_tmp[cols_X], df_tmp[col_label],
+        shuffle=True, stratify=df_tmp[col_label],
+        test_size=0.4, random_state=42,
+    ) 
     
-    
-    # train and test model
+    # train and test a model
     clf = RandomForestClassifier()
     
-    clf.fit(df_train[cols_X], df_train[col_label])
+    clf.fit(X_train, y_train)
     
-    pred = clf.predict(df_test[cols_X])
+    pred = clf.predict(X_test)
   
     print('\n\n---------------')
     print('confusion matrix:')
-    print(confusion_matrix(pred, df_test[col_label]))
+    print(confusion_matrix(pred, y_test))
 
 
 if __name__ == '__main__':
-    offline = False
-    main(offline=offline)
+    main()
