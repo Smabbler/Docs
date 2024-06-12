@@ -9,7 +9,7 @@ source bin/activate
 pip install -r requirements.txt
 ```
 
-To run this example you need to either get access to the API: ADD_INSTRUCTIONS
+To run this example you need to either get access to the API and edit the `example_1.py` file to add the API key: ADD_INSTRUCTIONS
 
 **Usage:**
 to run the example (it will take a few minutes to run; exceptions will be printed if processing of particular examples will fail --- the script will retry to process failed examples a few times):
