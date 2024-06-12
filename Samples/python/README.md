@@ -3,12 +3,16 @@ This repository contains a simple example on how to use Smabbler Galaxia to extr
 **Setup:**
 `cd` into the repository, create a virtual environment, and install required dependencies:
 
-`python3 -m venv .`
-`source bin/activate`
-`pip install -r requirements.txt`
+```
+python3 -m venv .
+source bin/activate
+pip install -r requirements.txt
+```
 
 To run this example you need to either get access to the API: ADD_INSTRUCTIONS
 
 **Usage:**
 to run the example (it will take a few minutes to run; exceptions will be printed if processing of particular examples will fail --- the script will retry to process failed examples a few times):
-`./example_1.py`
+```
+./example_1.py
+```
