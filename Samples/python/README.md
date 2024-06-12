@@ -7,17 +7,8 @@ This repository contains a simple example on how to use Smabbler Galaxia to extr
 `source bin/activate`
 `pip install -r requirements.txt`
 
-To run this example you need to either get access to the API: ~~instruction link~~
-or change the offline flag to `True` at the end of the script:
-`offline = False`
+To run this example you need to either get access to the API: ADD_INSTRUCTIONS
 
 **Usage:**
-to run the example (it will take a few minutes to run, exceptions will be printed if processing of particular examples will fail):
+to run the example (it will take a few minutes to run; exceptions will be printed if processing of particular examples will fail --- the script will retry to process failed examples a few times):
 `./example_1.py`
-
-We have limited the number of datapoints to make this example fast to run. In order to run it on full dataset, comment out the following lines:
-```
-    df_tr = df_tr[df_tr['LabelID'].isin(['ASC99', 'ASC165'])].copy()
-    df_tt = df_tt[df_tt['LabelID'].isin(['ASC99', 'ASC165'])].copy()
-```
-
