@@ -1,4 +1,6 @@
-This repository contains a simple example on how to use Smabbler Galaxia to extract a features from natural text, and use them to build and evaluate a Machine Learning model. In this particular case we extract information about symptoms and diseases from descriptions of veterinary cases. Other information can be extracted by selecting a different pre-existing Smabbler model ("algorithm_version") or creating one on your own to suit your specific needs on our website: https://www.smabbler.com/alpha (currently in alpha).
+This repository contains a simple example of how to use **Smabbler Galaxia** to extract structured features from natural language text using a pre-existing model. The example processes veterinary case descriptions to identify symptoms and diseases.
+
+To extract other types of information, you can select a different pre-existing model (`algorithm_version`) or create your own using your data via the Smabbler Portal: [https://beta.smabbler.com](https://beta.smabbler.com)
 
 **Setup:**
 `cd` into the repository, create a virtual environment, and install required dependencies:
