@@ -40,7 +40,7 @@ Galaxia integrates with common AI frameworks for easy use in existing pipelines:
 ---
 
 **Build Your Graph**  
-[https://beta.smabbler.com](https://beta.smabbler.com)
+[https://beta.smabbler.com](https://beta.cloud.smabbler.com/home)
 
 **Documentation**  
 [https://smabbler.gitbook.io/smabbler](https://smabbler.gitbook.io/smabbler)
