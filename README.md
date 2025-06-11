@@ -8,8 +8,6 @@
 ---
 **Galaxia** is a graph language model (GLM) and knowledge graph platform that automates the transformation of unstructured data into structured and semantically rich graphs. It combines graph-based data structures with natural language processing to build a transparent and flexible system for organizing, retrieving and reasoning over information.
 
-Unlike generative models, Galaxia does not produce new content. It focuses on extracting meaning from existing data - no training, embeddings or manual labeling required.
-
 ### Key Features
 ---
 
