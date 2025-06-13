@@ -36,9 +36,6 @@ Galaxia integrates with common AI frameworks for easy use in existing pipelines:
 
 ### Get Started
 ---
- **Python Example**  
-For a simple Python usage example, [click here](https://github.com/Smabbler/Docs/tree/main/Samples/python).  
-It demonstrates identifying symptoms and diseases from veterinary case descriptions using a pre-existing model.
 
 **Build Your Graph**  
 [https://beta.smabbler.com](https://beta.cloud.smabbler.com/home)
